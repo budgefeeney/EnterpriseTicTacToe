@@ -16,21 +16,21 @@ printAsNumberedLines ls =
         putStrLn <| show n ++ " - " ++ show l
 
 processMove :: (GameState, MoveResult) -> IO (MoveResult)
-processMove (game, m@(GameWon p)) = return m
-processMove (game, m@GameTied)    = return m
+processMove (game, m@(GameWon p)) = do { displayBoard game; return m }
+processMove (game, m@GameTied)    = do { displayBoard game; return m }
 processMove (game, m@(PlayerXsTurn (ValidXMoves xms))) =
   do
       displayBoard game
 
-      putStrLn "\nPlayer Os turn"
-      printAsNumberedLines oms
+      putStrLn "\nPlayer Xs turn"
+      printAsNumberedLines xms
       putStrLn "Q - Quit"
 
       cmd <- getLine
       case cmd of
         "Q" -> return GameQuit
         _   -> case (reads cmd) :: [(Int, String)] of
-                  [(intCmd, "")] -> processMove <| playerOMove game (oms !! intCmd)
+                  [(intCmd, "")] -> processMove <| playerXMove game (xms !! intCmd)
                   _              -> do
                                       putStrLn <| "Invalid input '" ++ cmd ++ "', try again"
                                       processMove (game, m)
