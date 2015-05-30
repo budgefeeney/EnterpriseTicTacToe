@@ -1,4 +1,14 @@
-module TicTacToe where
+module TicTacToe  (
+  MoveResult(..),
+  GameState,
+  ValidXMoves(..),
+  ValidOMoves(..),
+  newGame,
+  playerXMove,
+  playerOMove,
+  getCells
+  )
+where
 
 
 import           Data.Function (on)
@@ -73,8 +83,9 @@ vertPositions  = allValues
 data GameState = GameState { getCells :: [Cell] }
 
 getCell :: GameState -> CellPosition -> Cell
-getCell (GameState cells) searchPos =
-   find (\c -> cellPos c == searchPos) cells
+getCell state searchPos =
+   getCells state
+   |> find (\c -> cellPos c == searchPos)
    |> fromMaybe (error ("Failed to find this cell in the board " ++ show searchPos))
 
 
@@ -183,20 +194,20 @@ remainingMovesForPlayer playerMoveFn game =
 playerXMove :: GameState -> PlayerXMove -> (GameState, MoveResult)
 playerXMove game (PlayerXMove pos) =
     let
-        updCell = Cell { cellPos=pos, cellState=Played PlayerX }
-        updGame = updateCell updCell game
+        newCell = Cell { cellPos=pos, cellState=Played PlayerX }
+        newGame = updateCell newCell game
     in
-    if isGameWonBy PlayerX updGame
+    if isGameWonBy PlayerX newGame
     then
-        (updGame, GameWon PlayerX)
-    else if isGameTied updGame
+        (newGame, GameWon PlayerX)
+    else if isGameTied newGame
     then
-        (updGame, GameTied)
+        (newGame, GameTied)
     else
         let
-            playerOMoves = ValidOMoves <| remainingMovesForPlayer (PlayerOMove <. cellPos)  updGame
+            playerOMoves = ValidOMoves <| remainingMovesForPlayer (PlayerOMove <. cellPos)  newGame
         in
-        (updGame, PlayerOsTurn playerOMoves)
+        (newGame, PlayerOsTurn playerOMoves)
 
 
 playerOMove :: GameState -> PlayerOMove -> (GameState, MoveResult)
