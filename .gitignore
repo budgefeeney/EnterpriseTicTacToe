@@ -1,0 +1,7 @@
+dist/
+.dist-buildwrapper/
+.settings/
+.project
+.DS_Store
+.tags
+
