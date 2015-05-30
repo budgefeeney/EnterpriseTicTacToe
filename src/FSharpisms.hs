@@ -5,6 +5,7 @@ module FSharpisms where
 
   (<|) :: (b -> c) -> b -> c
   (<|) = ($)
+  infixr 0 <|
 
   (.>), andThen :: (a -> b) -> (b -> c) -> a -> c
   (.>) = flip (.)
