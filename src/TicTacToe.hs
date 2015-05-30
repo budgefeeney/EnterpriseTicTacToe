@@ -1,10 +1,10 @@
 module TicTacToe where
 
 
-import Data.List
-import Data.Function (on)
-import Data.Maybe (fromMaybe)
-import FSharpisms
+import           Data.Function (on)
+import           Data.List
+import           Data.Maybe    (fromMaybe)
+import           FSharpisms    ((<.), (<|), (|>))
 
 
 -- The data model
@@ -109,7 +109,7 @@ instance Show GameState where
                              |> sortBy horizPosCmp
 
             cols v = [show cell | cell <- row game v]
-            rows   = ["|" ++ intercalate "|" (cols v) ++ "|" | v <- vertPositions]
+            rows   = ["I" ++ intercalate "I" (cols v) ++ "I" | v <- vertPositions]
             rowSep = "\n" ++ replicate 7 '-' ++ "\n"
         in
         rowSep ++ intercalate rowSep rows ++ rowSep
@@ -200,7 +200,7 @@ playerXMove game (PlayerXMove pos) =
 
 
 playerOMove :: GameState -> PlayerOMove -> (GameState, MoveResult)
-playerOMove game (PlayerOMovej pos) =
+playerOMove game (PlayerOMove pos) =
     let
         updCell = Cell { cellPos=pos, cellState=Played PlayerO }
         updGame = updateCell updCell game
