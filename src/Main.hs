@@ -30,7 +30,7 @@ numberedMoves = zip [0..]
 
 printAsNumberedLines :: (Show a) => [a] -> IO ()
 printAsNumberedLines ls =
-    forM_ (numberedMoves ls) $ \(n,l) ->
+    forM_ (numberedMoves ls) <| \(n,l) ->
         putStrLn <| show n ++ " - " ++ show l
 
 processMove :: (GameState, MoveResult) -> IO (MoveResult)
@@ -45,7 +45,7 @@ processMove (game, m@(PlayerXsTurn (ValidXMoves xms))) =
   >>= \cmd -> case (parseCommand cmd (length xms)) of
                 CmdQuit         -> return GameQuit
                 CmdIndex(index) -> playerXMove game (xms !! index) |> processMove
-                InvalidCmd(err) -> putStrLn err >> processMove game m
+                InvalidCmd(err) -> putStrLn err >> processMove (game, m)
 processMove (game, m@(PlayerOsTurn (ValidOMoves oms))) =
   displayBoard game
   >> putStrLn "\nPlayer Os turn"
@@ -55,7 +55,7 @@ processMove (game, m@(PlayerOsTurn (ValidOMoves oms))) =
   >>= \cmd -> case (parseCommand cmd (length oms)) of
                 CmdQuit         -> return GameQuit
                 CmdIndex(index) -> playerOMove game (oms !! index) |> processMove
-                InvalidCmd(err) -> putStrLn err >> processMove game m
+                InvalidCmd(err) -> putStrLn err >> processMove (game, m)
 
 main::IO()
 main =
