@@ -2,7 +2,25 @@ module Main where
 
 import           Control.Monad (forM_)
 import           TicTacToe
-import           FSharpisms ((<|))
+import           FSharpisms ((<|), (|>))
+
+type ErrorMsg = String
+
+data Command
+  = CmdQuit
+  | CmdIndex Int
+  | InvalidCmd ErrorMsg
+
+parseCommand :: String -> Int -> Command
+parseCommand "Q" _ = CmdQuit
+parseCommand "q" _ = CmdQuit
+parseCommand intStr cmdCount =
+    case (reads intStr) :: [(Int, String)] of
+    [(index, "")] -> if index >= 0 && index < cmdCount
+                      then CmdIndex (index)
+                      else InvalidCmd ("Index " ++ intStr ++ " is invalid, acceptable indices are in the range 0.." ++ (show (cmdCount - 1)))
+    _ -> InvalidCmd ("The given value \"" ++ intStr ++ "\" is neither an integer nor 'Q'")
+parseCommand cmd _ = InvalidCmd ("The given value \"" ++ cmd ++ "\" is neither an integer nor 'Q'")
 
 displayBoard :: GameState -> IO ()
 displayBoard = print
@@ -19,39 +37,25 @@ processMove :: (GameState, MoveResult) -> IO (MoveResult)
 processMove (game, m@(GameWon p)) = do { displayBoard game; return m }
 processMove (game, m@GameTied)    = do { displayBoard game; return m }
 processMove (game, m@(PlayerXsTurn (ValidXMoves xms))) =
-  do
-      displayBoard game
-
-      putStrLn "\nPlayer Xs turn"
-      printAsNumberedLines xms
-      putStrLn "Q - Quit"
-
-      cmd <- getLine
-      case cmd of
-        "Q" -> return GameQuit
-        _   -> case (reads cmd) :: [(Int, String)] of
-                  [(intCmd, "")] -> processMove <| playerXMove game (xms !! intCmd)
-                  _              -> do
-                                      putStrLn <| "Invalid input '" ++ cmd ++ "', try again"
-                                      processMove (game, m)
+  displayBoard game
+  >> putStrLn "\nPlayer Xs turn"
+  >> printAsNumberedLines xms
+  >> putStrLn "Q - Quit"
+  >> getLine
+  >>= \cmd -> case (parseCommand cmd (length xms)) of
+                CmdQuit         -> return GameQuit
+                CmdIndex(index) -> playerXMove game (xms !! index) |> processMove
+                InvalidCmd(err) -> putStrLn err >> processMove game m
 processMove (game, m@(PlayerOsTurn (ValidOMoves oms))) =
-  do
-      displayBoard game
-
-      putStrLn "\nPlayer Os turn"
-      printAsNumberedLines oms
-      putStrLn "Q - Quit"
-
-      cmd <- getLine
-      case cmd of
-        "Q" -> return GameQuit
-        _   -> case (reads cmd) :: [(Int, String)] of
-                  [(intCmd, "")] -> processMove <| playerOMove game (oms !! intCmd)
-                  _              -> do
-                                      putStrLn <| "Invalid input '" ++ cmd ++ "', try again"
-                                      processMove (game, m)
-processMove _ = error "Unsupported"
-
+  displayBoard game
+  >> putStrLn "\nPlayer Os turn"
+  >> printAsNumberedLines oms
+  >> putStrLn "Q - Quit"
+  >> getLine
+  >>= \cmd -> case (parseCommand cmd (length oms)) of
+                CmdQuit         -> return GameQuit
+                CmdIndex(index) -> playerOMove game (oms !! index) |> processMove
+                InvalidCmd(err) -> putStrLn err >> processMove game m
 
 main::IO()
 main =
@@ -59,8 +63,7 @@ main =
       printResult (GameTied)  = putStrLn <| "Game has been tied"
       printResult (GameQuit)  = putStrLn <| "Game has been quit by user "
       printResult _           = putStrLn <| "Game Ended Weirdly"
+
+      (state, move) = newGame
   in
-  do
-    let (state, move) = newGame
-    m <- processMove (state, move)
-    printResult m
+  processMove (state, move) >>= printResult
